@@ -4,8 +4,7 @@
 
 LogFlow is a developer-focused log aggregation and analysis platform that ships structured logs to a central Go backend and provides AI-powered natural language querying and automated incident summaries.
 
-[![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?style=flat&logo=go)](https://go.dev/)\
 [![Status](https://img.shields.io/badge/status-WIP-yellow.svg)](https://github.com/serilevanjalines/LogFlow)
 
 ---
