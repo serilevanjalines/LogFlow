@@ -24,18 +24,19 @@ LogFlow is a developer-focused log aggregation and analysis platform that ships 
 ---
 
 ## 🏗️ Architecture
-┌─────────────┐ ┌──────────────┐ ┌─────────────┐
-│ Agent │ │ Server │ │ Gemini 3 │
-│ (Parses) │──POST──▶│ (Filters & │──API───▶│ API │
-│ app.log │ /ingest │ Analyzes) │ Call │ │
-└─────────────┘ └──────────────┘ └─────────────┘
-│
-│ Stores
-▼
-┌──────────────┐
-│ In-Memory │
-│ Storage │
-└──────────────┘
+┌─────────────┐         ┌──────────────┐         ┌─────────────┐
+│   Agent     │         │   Server     │         │  Gemini 3   │
+│  (Parses)   │──POST──▶│  (Filters &  │──API───▶│    API      │
+│   app.log   │ /ingest │  Analyzes)   │  Call   │             │
+└─────────────┘         └──────────────┘         └─────────────┘
+                               │
+                               │ Stores
+                               ▼
+                        ┌──────────────┐
+                        │  In-Memory   │
+                        │    Storage   │
+                        └──────────────┘
+
 undefined
 ---
 
@@ -63,55 +64,38 @@ Terminal 3 - Test AI Integration:
 
 📡 API Reference
 
-POST /ai/query
-Ask natural language questions about logs.
+## 📡 API Reference
 
-Request:
+### POST `/ingest`
+Ingest structured log events.
+
+**Request:**
+```json
 {
-  "question": "What errors occurred in the payments service?",
-  "service": "payments",
-  "level": "ERROR"
+  "Service": "payments",
+  "Level": "ERROR",
+  "Message": "payment failed",
+  "Route": "/checkout"
 }
+Response: 200 OK
 
-Response:
-{
-  "answer": "Based on the logs, the payments service experienced 2 failures...",
-  "relevant_logs": [...],
-  "log_count": 2
-}
-
-GET /ai/summary
-Generate automated incident summary with AI analysis.
+GET /logs
+Query stored logs with filters.
 
 Query Parameters:
-service - Optional service filter
 
-from - Optional start time
+service - Filter by service name
 
-to - Optional end time
+level - Filter by level (INFO, ERROR, WARN)
 
-Response:
+route - Filter by route
 
-json
-{
-  "summary": "The payments service is experiencing 100% error rate. Likely cause: database timeout. Suggested actions: 1) Check external payment gateway status...",
-  "total_logs": 4,
-  "error_count": 2,
-  "warning_count": 0,
-  "info_count": 2,
-  "top_services": {
-    "payments": 2,
-    "auth": 1
-  }
-}
-Example:
-curl "http://localhost:8080/ai/summary?service=payments"
+from - Start time (RFC3339)
 
-service - Optional service filter
+to - End time (RFC3339)
 
-from - Optional start time
+Example:curl "http://localhost:8080/logs?service=payments&level=ERROR"
 
-to - Optional end time
 
 Example:
 🤖 How We Use Gemini 3
@@ -130,18 +114,6 @@ Structured Responses - Returns JSON with answer, evidence, and log references
 The Gemini 3 Flash model provides low-latency responses ideal for real-time incident triage.
 
 📁 Project Structure
-LogFlow/
-├── cmd/
-│   ├── server/main.go       # HTTP server & API handlers
-│   └── agent/main.go        # Log parsing agent
-├── internal/
-│   └── ai/gemini.go         # Gemini API client wrapper
-├── .env                     # Environment variables (gitignored)
-├── .gitignore
-├── go.mod
-├── go.sum
-├── app.log                  # Sample log file
-├── README.md
-└── test_gemini.go           # Gemini integration test
+<img width="640" height="576" alt="image" src="https://github.com/user-attachments/assets/f48cfa34-f259-4c04-9499-3de76587d6a5" />
 
 The project is still in WIP :) @Jan 15 2026
