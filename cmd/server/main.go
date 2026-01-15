@@ -45,6 +45,7 @@ func main() {
 	http.HandleFunc("/ingest", ingestHandler)
 	http.HandleFunc("/logs", logsHandler)
 	http.HandleFunc("/ai/query", aiQueryHandler)
+	http.HandleFunc("/ai/summary", aiSummaryHandler)
 
 	log.Println("LogFlow server listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -138,6 +139,15 @@ type AIQueryResponse struct {
 	LogCount     int        `json:"log_count"`
 }
 
+type AISummaryResponse struct {
+	Summary      string         `json:"summary"`
+	TotalLogs    int            `json:"total_logs"`
+	ErrorCount   int            `json:"error_count"`
+	WarningCount int            `json:"warning_count"`
+	InfoCount    int            `json:"info_count"`
+	TopServices  map[string]int `json:"top_services"`
+}
+
 func aiQueryHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -207,4 +217,128 @@ Please provide a concise answer based on the logs above. If you notice patterns,
 	json.NewEncoder(w).Encode(response)
 
 	log.Printf("AI Query answered: %s (found %d logs)", req.Question, len(relevantLogs))
+}
+
+func aiSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	serviceFilter := r.URL.Query().Get("service")
+	fromStr := r.URL.Query().Get("from")
+	toStr := r.URL.Query().Get("to")
+
+	var fromTime, toTime time.Time
+	var haveFrom, haveTo bool
+
+	if fromStr != "" {
+		if t, err := time.Parse(time.RFC3339, fromStr); err == nil {
+			fromTime = t
+			haveFrom = true
+		}
+	}
+	if toStr != "" {
+		if t, err := time.Parse(time.RFC3339, toStr); err == nil {
+			toTime = t
+			haveTo = true
+		}
+	}
+
+	mu.Lock()
+	var filteredLogs []LogEvent
+	errorCount := 0
+	warningCount := 0
+	infoCount := 0
+	serviceMap := make(map[string]int)
+
+	for _, evt := range events {
+		if serviceFilter != "" && evt.Service != serviceFilter {
+			continue
+		}
+
+		if evt.Timestamp != "" {
+			evtTime, err := time.Parse(time.RFC3339, evt.Timestamp)
+			if err == nil {
+				if haveFrom && evtTime.Before(fromTime) {
+					continue
+				}
+				if haveTo && evtTime.After(toTime) {
+					continue
+				}
+			}
+		}
+
+		filteredLogs = append(filteredLogs, evt)
+
+		switch evt.Level {
+		case "ERROR":
+			errorCount++
+		case "WARN", "WARNING":
+			warningCount++
+		case "INFO":
+			infoCount++
+		}
+
+		serviceMap[evt.Service]++
+	}
+	mu.Unlock()
+
+	if len(filteredLogs) == 0 {
+		http.Error(w, "No logs found for the given filters", http.StatusNotFound)
+		return
+	}
+
+	context := fmt.Sprintf(`Log Statistics:
+- Total logs: %d
+- Errors: %d
+- Warnings: %d
+- Info: %d
+
+Top Services:`, len(filteredLogs), errorCount, warningCount, infoCount)
+
+	for service, count := range serviceMap {
+		context += fmt.Sprintf("\n- %s: %d logs", service, count)
+	}
+
+	if errorCount > 0 {
+		context += "\n\nSample Error Messages:"
+		errorSamples := 0
+		for _, evt := range filteredLogs {
+			if evt.Level == "ERROR" && errorSamples < 5 {
+				context += fmt.Sprintf("\n- [%s] %s: %s", evt.Timestamp, evt.Service, evt.Message)
+				errorSamples++
+			}
+		}
+	}
+
+	prompt := fmt.Sprintf(`You are an expert SRE assistant. Analyze the following log statistics and provide:
+1. A brief incident summary (2-3 sentences)
+2. The most likely root cause
+3. Three specific actions to investigate or resolve the issue
+
+%s
+
+Provide a concise, actionable summary.`, context)
+
+	summary, err := geminiClient.Query(prompt)
+	if err != nil {
+		log.Printf("Gemini API error: %v", err)
+		http.Error(w, "Failed to generate summary", http.StatusInternalServerError)
+		return
+	}
+
+	response := AISummaryResponse{
+		Summary:      summary,
+		TotalLogs:    len(filteredLogs),
+		ErrorCount:   errorCount,
+		WarningCount: warningCount,
+		InfoCount:    infoCount,
+		TopServices:  serviceMap,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
+	log.Printf("AI Summary generated for %d logs", len(filteredLogs))
 }
