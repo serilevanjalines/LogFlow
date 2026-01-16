@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: logflow-server
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - logflow-network
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    container_name: logflow-agent
+    depends_on:
+      - server
+    volumes:
+      - ./app.log:/app/app.log:ro
+    environment:
+      - SERVER_URL=http://server:8080
+    networks:
+      - logflow-network
+    restart: unless-stopped
+
+networks:
+  logflow-network:
+    driver: bridge

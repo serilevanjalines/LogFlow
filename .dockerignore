@@ -1,0 +1,21 @@
+# Ignore build artifacts
+*.exe
+*.test
+*.out
+server
+agent
+
+# Ignore git
+.git
+.gitignore
+
+# Ignore docs
+README.md
+docs/
+
+# Ignore test files
+*_test.go
+
+# ✅ Ignore sensitive files
+.env
+*.log
