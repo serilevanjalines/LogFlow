@@ -18,6 +18,12 @@ type LogEvent struct {
 }
 
 func main() {
+	// ✅ Read server URL from environment (for Docker)
+	serverURL := os.Getenv("SERVER_URL")
+	if serverURL == "" {
+		serverURL = "http://localhost:8080" // Fallback for local dev
+	}
+
 	f, err := os.Open("app.log")
 	if err != nil {
 		fmt.Println("error opening file", err)
@@ -58,13 +64,15 @@ func main() {
 				evt.Route = val
 			}
 		}
+
 		data, err := json.Marshal(evt)
 		if err != nil {
 			fmt.Println("error marshaling:", err)
 			continue
 		}
 
-		resp, err := http.Post("http://localhost:8080/ingest", "application/json", bytes.NewReader(data))
+		// ✅ Use serverURL variable instead of hardcoded localhost
+		resp, err := http.Post(serverURL+"/ingest", "application/json", bytes.NewReader(data))
 		if err != nil {
 			fmt.Println("error posting:", err)
 			continue
@@ -72,7 +80,5 @@ func main() {
 		resp.Body.Close()
 
 		fmt.Println("SENT:", string(data))
-
-		// TODO: send evt as JSON to http://localhost:8080/ingest
 	}
 }
