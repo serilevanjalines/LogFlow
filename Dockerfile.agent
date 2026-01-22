@@ -1,3 +1,4 @@
+#Stage 1: Builder (golang:1.23-alpine)
 FROM golang:1.23-alpine AS builder
 
 RUN apk add --no-cache git
@@ -11,6 +12,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o agent ./cmd/agent
 
+#Stage 2: Runtime (alpine:latest)
 FROM alpine:latest
 
 WORKDIR /app
