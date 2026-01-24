@@ -1,21 +1,22 @@
-# Ignore build artifacts
-*.exe
-*.test
-*.out
-server
-agent
-
-# Ignore git
+# Git files
 .git
 .gitignore
 
-# Ignore docs
+# Environment files
+.env
+.env.*
+
+# Documentation
 README.md
 docs/
 
-# Ignore test files
-*_test.go
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
 
-# ✅ Ignore sensitive files
-.env
-*.log
+# IDE files
+.vscode/
+.idea/
+*.swp
