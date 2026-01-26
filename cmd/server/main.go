@@ -50,37 +50,37 @@ var (
 )
 
 func getLogsInTimeRange(startTime, endTime time.Time, limit int) []LogEvent {
-    query := `
+	query := `
         SELECT id, timestamp, service, level, route, message, metadata, created_at
         FROM logs WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp DESC LIMIT $3
     `
 
-    rows, err := db.Query(query, startTime, endTime, limit)
-    if err != nil {
-        log.Printf("Query error: %v", err)
-        return nil
-    }
-    defer rows.Close()
+	rows, err := db.Query(query, startTime, endTime, limit)
+	if err != nil {
+		log.Printf("Query error: %v", err)
+		return nil
+	}
+	defer rows.Close()
 
-    var logs []LogEvent
-    for rows.Next() {
-        var evt LogEvent
-        var ts, createdAt time.Time
-        var metadataJSON []byte
-        var route sql.NullString
+	var logs []LogEvent
+	for rows.Next() {
+		var evt LogEvent
+		var ts, createdAt time.Time
+		var metadataJSON []byte
+		var route sql.NullString
 
-        err := rows.Scan(&evt.ID, &ts, &evt.Service, &evt.Level, &route, &evt.Message, &metadataJSON, &createdAt)
-        if err != nil {
-            continue
-        }
+		err := rows.Scan(&evt.ID, &ts, &evt.Service, &evt.Level, &route, &evt.Message, &metadataJSON, &createdAt)
+		if err != nil {
+			continue
+		}
 
-        evt.Timestamp = ts.Format(time.RFC3339)
-        if route.Valid {
-            evt.Route = route.String
-        }
-        logs = append(logs, evt)
-    }
-    return logs
+		evt.Timestamp = ts.Format(time.RFC3339)
+		if route.Valid {
+			evt.Route = route.String
+		}
+		logs = append(logs, evt)
+	}
+	return logs
 }
 
 func formatLogsForAI(logs []LogEvent) string {
@@ -241,7 +241,7 @@ func ingestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Handle metadata - convert to JSONB or NULL
 	var metadataJSON interface{}
-	if evt.Metadata != nil && len(evt.Metadata) > 0 {
+	if len(evt.Metadata) > 0 {
 		metadataBytes, err := json.Marshal(evt.Metadata)
 		if err != nil {
 			http.Error(w, "Invalid metadata", http.StatusBadRequest)
