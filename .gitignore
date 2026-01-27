@@ -1,3 +1,4 @@
 .env
 *.log
 run.ps1
+app.log
