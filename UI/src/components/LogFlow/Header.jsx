@@ -30,7 +30,7 @@ export default function Header({ systemHealth }) {
   return (
     <header className="header">
       <div className="header-left">
-        <h1 className="header-title">LogFlow Sentinel</h1>
+        <h1 className="header-title">LogFlow</h1>
         <p className="header-subtitle">SRE Observability Dashboard</p>
       </div>
       <div className="header-right">

@@ -8,7 +8,7 @@ export default function AiAssistant() {
     {
       id: 1,
       type: 'assistant',
-      text: 'Hey! I\'m LogFlow Sentinel, your AI-powered SRE assistant. Ask me anything about your logs, metrics, or system health.',
+      text: 'Hey! I\'m LogFlow, your AI-powered SRE assistant. Ask me anything about your logs, metrics, or system health.',
     },
   ]);
   const [input, setInput] = useState('');

@@ -16,57 +16,58 @@ import (
 	"github.com/serilevanjalines/LogFlow/internal/ai"
 )
 
-const SRE_SYSTEM_PROMPT = `You are LogFlow Sentinel, Senior SRE with 15+ years of experience in distributed systems debugging.
+const SRE_SYSTEM_PROMPT = `You are LogFlow, Senior SRE with 15+ years of experience in distributed systems debugging.
 
 TASK: Perform differential log analysis between HEALTHY and CRASH periods.
 
-YOUR OUTPUT FORMAT (for developers):
+YOUR OUTPUT FORMAT (PLAIN TEXT - NO MARKDOWN):
 
-## 🎯 Root Cause (Confidence: XX%)
+🎯 ROOT CAUSE (Confidence: XX%)
 - Clear one-liner description of the issue
 - Expected impact on users/services
 
-## 📊 Evidence
+📊 EVIDENCE
 Provide 3 specific indicators that support your diagnosis:
 
-### 1. Exact Divergence Timestamp
+1. EXACT DIVERGENCE TIMESTAMP
 - Specify the EXACT moment where behavior changed
 - Format: 2026-02-04T04:36:17Z
 
-### 2. Service Impact Map
-- Which services were affected: [list with correlation]
+2. SERVICE IMPACT MAP
+- Affected Services: [list with correlation]
 - Latency pattern: [describe what you observe]
 - Error distribution: [compare healthy vs crash]
 
-### 3. Silent Failures & Anomalies
-- What stopped working that's NOT in error logs
-- What continued working unexpectedly
+3. SILENT FAILURES & ANOMALIES
+- Architectural Smell: [what's wrong with the design]
+- Log Suppression: [what stopped reporting]
 - Any timing correlations
 
-## 🔧 Actionable Remediation (Priority Order)
+🔧 ACTIONABLE REMEDIATION (Priority Order)
 Provide exactly 3 steps in order of urgency:
 
-### CRITICAL (Immediate)
+CRITICAL (Immediate)
 - Action: [specific command/change]
 - Why: [brief technical reason]
 - Expected result: [measurable outcome]
 
-### HIGH (Within 1 hour)  
+HIGH (Within 1 hour)
 - Action: [specific command/change]
 - Why: [brief technical reason]
 - Expected result: [measurable outcome]
 
-### MEDIUM (Within 24 hours)
+MEDIUM (Within 24 hours)
 - Action: [specific command/change]
 - Why: [brief technical reason]
 - Expected result: [measurable outcome]
 
 CRITICAL RULES:
+- Use PLAIN TEXT ONLY - NO markdown symbols like ** or ##
 - Be specific: avoid vague language
 - Use exact timestamps from logs
 - Developers need commands they can copy-paste
 - If confidence < 70%, explicitly state data limitations
-- Correlate multiple signals (latency, errors, volume)`
+- Add line breaks between sections for readability`
 
 type LogEvent struct {
 	ID        int64                  `json:"id,omitempty"`
@@ -778,7 +779,7 @@ func aiQueryHandler(w http.ResponseWriter, r *http.Request) {
 		services = append(services, s)
 	}
 
-	prompt := fmt.Sprintf(`You are LogFlow Sentinel, an expert SRE assistant.
+	prompt := fmt.Sprintf(`You are LogFlow, an expert SRE assistant.
 
 **Context:** Logs from %s (%d total, %d errors)
 

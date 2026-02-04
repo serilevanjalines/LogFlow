@@ -65,7 +65,7 @@ function Dashboard() {
               </div>
               <div>
                 <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-orange-500">
-                  LogFlow Sentinel
+                  LogFlow
                 </h1>
                 <p className="text-gray-400 text-sm mt-1 font-medium">Real-time SRE Intelligence Platform</p>
               </div>
