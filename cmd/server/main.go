@@ -25,11 +25,11 @@ TASK: Perform differential log analysis between HEALTHY and CRASH periods.
 
 YOUR OUTPUT FORMAT (PLAIN TEXT - NO MARKDOWN):
 
-🎯 ROOT CAUSE (Confidence: XX%)
+ROOT CAUSE (Confidence: XX%)
 - Clear one-liner description of the issue
 - Expected impact on users/services
 
-📊 EVIDENCE
+EVIDENCE
 Provide 3 specific indicators that support your diagnosis:
 
 1. EXACT DIVERGENCE TIMESTAMP
@@ -46,7 +46,7 @@ Provide 3 specific indicators that support your diagnosis:
 - Log Suppression: [what stopped reporting]
 - Any timing correlations
 
-🔧 ACTIONABLE REMEDIATION (Priority Order)
+ACTIONABLE REMEDIATION (Priority Order)
 Provide exactly 3 steps in order of urgency:
 
 CRITICAL (Immediate)
@@ -465,7 +465,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	totalLogs := 0
 	errorLogs := 0
 	infoLogs := 0
-	warnLogs := 0 
+	warnLogs := 0
 
 	for rows.Next() {
 		var level string
@@ -898,7 +898,7 @@ func aiQueryHandler(w http.ResponseWriter, r *http.Request) {
 
 **Output Format (IMPORTANT - Use plain text, NO markdown):**
 
-⚠️ ISSUE:
+ISSUE:
 [one-line summary]
 
 ROOT CAUSE:
@@ -910,7 +910,7 @@ AFFECTED SERVICES:
 TIME STARTED:
 [timestamp]
 
-🔧 ACTION REQUIRED:
+ACTION REQUIRED:
 [numbered steps]
 
 Use plain text only. No ** or markdown. Add line breaks between sections.`, timeDesc, len(relevantLogs), errorCount, context, req.Question)
@@ -923,7 +923,7 @@ Use plain text only. No ** or markdown. Add line breaks between sections.`, time
 	}
 
 	response := AIQueryResponse{
-		Answer:       fmt.Sprintf("🔍 Analyzed: %s\n\n%s\n\n📊 SUMMARY: %d logs | %d errors | %d services", timeDesc, answer, len(relevantLogs), errorCount, len(services)),
+		Answer:       fmt.Sprintf("Analyzed: %s\n\n%s\n\nSUMMARY: %d logs | %d errors | %d services", timeDesc, answer, len(relevantLogs), errorCount, len(services)),
 		RelevantLogs: relevantLogs,
 		LogCount:     len(relevantLogs),
 		ErrorCount:   errorCount,
