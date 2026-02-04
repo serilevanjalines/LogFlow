@@ -13,6 +13,28 @@ export default function TimeTravelDebugger({ onSelectLogWindow, onCiteLog }) {
   };
   const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [archDiagram, setArchDiagram] = useState(null);
+  const [mimeType, setMimeType] = useState('');
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMimeType(file.type);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result.split(',')[1];
+        setArchDiagram(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!comparison?.analysis) return;
+    import('../../../services/api').then(api => {
+      api.generateReport('Time-Travel Differential Analysis', comparison.analysis);
+    });
+  };
 
   // Separate dates for healthy/crash
   const [healthyDate, setHealthyDate] = useState('2026-02-01');
@@ -66,7 +88,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow, onCiteLog }) {
       console.log('🚀 Sending to /ai/compare:', { healthyISO, crashISO });
 
       setLoading(true);
-      const data = await compareLogsPeriods(healthyISO, crashISO);
+      const data = await compareLogsPeriods(healthyISO, crashISO, archDiagram, mimeType);
       setComparison(data);
 
       // Handle citation highlight
@@ -127,6 +149,12 @@ export default function TimeTravelDebugger({ onSelectLogWindow, onCiteLog }) {
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
+    ),
+    Image: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+    ),
+    Download: () => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
     )
   };
 
@@ -196,20 +224,34 @@ export default function TimeTravelDebugger({ onSelectLogWindow, onCiteLog }) {
             </select>
           </div>
         </div>
-
-        <button onClick={handleCompare} className="compare-button" disabled={loading}>
-          {loading ? (
-            <>
-              <span className="loading-spinner"></span>
-              Analyzing Logs...
-            </>
-          ) : (
-            <>
-              <Icons.Zap /> Compare Periods
-            </>
-          )}
-        </button>
       </div>
+
+      <div className="vision-upload-card mt-4">
+        <label className="vision-upload-label">
+          <input type="file" onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+          <div className="vision-upload-content">
+            <span className="vision-icon"><Icons.Image /></span>
+            <div className="vision-text">
+              <span className="vision-title">{archDiagram ? 'Diagram Uploaded' : 'Upload Architecture Map (Vision Context)'}</span>
+              <span className="vision-sub">Optional: Help Gemini 3 see your infrastructure dependencies.</span>
+            </div>
+            {archDiagram && <span className="vision-status">✓ Image Ready</span>}
+          </div>
+        </label>
+      </div>
+
+      <button onClick={handleCompare} className="compare-button" disabled={loading}>
+        {loading ? (
+          <>
+            <span className="loading-spinner"></span>
+            Analyzing Logs...
+          </>
+        ) : (
+          <>
+            <Icons.Zap /> Compare Periods
+          </>
+        )}
+      </button>
 
       {/* RESULTS */}
       {comparison && (
@@ -241,7 +283,12 @@ export default function TimeTravelDebugger({ onSelectLogWindow, onCiteLog }) {
 
           {/* Full Width Analysis */}
           <div className="analysis-card">
-            <h3 className="analysis-title"><Icons.Shield /> Security Analysis</h3>
+            <div className="analysis-header-row">
+              <h3 className="analysis-title"><Icons.Shield /> Security Analysis</h3>
+              <button onClick={handleExportPDF} className="export-pdf-button">
+                <Icons.Download /> Export Report (PDF)
+              </button>
+            </div>
             <div className="analysis-text-container">
               {comparison.analysis ? (
                 <pre className="analysis-content">

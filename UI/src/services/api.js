@@ -3,9 +3,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 // MASTER apiCall - Sidebar + TimeTravel use THIS
 export const apiCall = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   console.log('🌐 API:', url, options.method || 'GET'); // DEBUG ALL CALLS
-  
+
   const response = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
@@ -26,7 +26,7 @@ export const checkHealth = () => apiCall('/health');
 // Logs (Sidebar uses this)
 export const getLogs = (fromTime, toTime, limit = 50) => {
   const params = new URLSearchParams();
-  
+
   // ✅ ENSURE times are in UTC before sending to server
   if (fromTime) {
     const fromDate = new Date(fromTime);
@@ -60,9 +60,9 @@ export const getMetrics = async () => {
   const services = Array.isArray(data?.services)
     ? data.services
     : Object.entries(topServices).map(([name]) => ({
-        name,
-        healthy: true,
-      }));
+      name,
+      healthy: true,
+    }));
 
   return {
     uptime: data?.uptime ?? 0,
@@ -84,10 +84,16 @@ export const getMetrics = async () => {
 };
 
 // 🔥 TIME TRAVEL - USES SAME apiCall!
-export const compareLogsPeriods = async (healthyISO, crashISO) => {
-  const url = `/ai/compare?healthy=${healthyISO}&crash=${crashISO}`;
-  console.log('🕒 TimeTravel:', url);
-  return apiCall(url); // SAME apiCall as Sidebar!
+export const compareLogsPeriods = async (healthyISO, crashISO, imageData = '', mimeType = '') => {
+  return apiCall('/ai/compare', {
+    method: 'POST',
+    body: JSON.stringify({
+      healthy: healthyISO,
+      crash: crashISO,
+      image_data: imageData,
+      mime_type: mimeType
+    }),
+  });
 };
 
 // AI Summary
@@ -105,9 +111,46 @@ export const getAdvancedMetrics = async () => {
 };
 
 // Query AI
-export const queryAI = (question) => apiCall('/ai/query', {
+export const queryAI = (question, imageData = '', mimeType = '') => apiCall('/ai/query', {
   method: 'POST',
-  body: JSON.stringify({ question }),
+  body: JSON.stringify({
+    question,
+    image_data: imageData,
+    mime_type: mimeType
+  }),
 });
+
+// PDF / Report Export
+export const generateReport = (title, content) => {
+  const printWindow = window.open('', '_blank');
+  const date = new Date().toLocaleString();
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>LogFlow SRE Report - ${title}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #111827; line-height: 1.6; }
+          .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { color: #2563eb; margin: 0; font-size: 24px; }
+          .meta { color: #6b7280; font-size: 12px; margin-top: 5px; }
+          .content { white-space: pre-wrap; background: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; }
+          .footer { margin-top: 50px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+          @media print { body { padding: 0; } .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>LogFlow SRE Analysis Report</h1>
+          <div class="meta">Generated on ${date} | Subject: ${title}</div>
+        </div>
+        <div class="content">${content}</div>
+        <div class="footer">Confidential SRE Document | Powered by LogFlow Gemini 3 Engine</div>
+        <script>setTimeout(() => { window.print(); }, 500);</script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
 
 export default { checkHealth, getLogs, getMetrics, getAdvancedMetrics, compareLogsPeriods, queryAI, getSummary, ingestLog };

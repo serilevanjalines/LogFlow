@@ -203,13 +203,24 @@ func initDB() error {
 }
 
 func timeCompareHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "GET only", 405)
+	if r.Method != "POST" {
+		http.Error(w, "POST only", 405)
 		return
 	}
 
-	healthy := r.URL.Query().Get("healthy")
-	crash := r.URL.Query().Get("crash")
+	var req struct {
+		Healthy   string `json:"healthy"`
+		Crash     string `json:"crash"`
+		ImageData string `json:"image_data"`
+		MimeType  string `json:"mime_type"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid body", 400)
+		return
+	}
+
+	healthy := req.Healthy
+	crash := req.Crash
 
 	if healthy == "" || crash == "" {
 		http.Error(w, "healthy & crash params required", 400)
@@ -273,7 +284,7 @@ CRASH PERIOD (%s → %s):
 		crashStart.Format("2006-01-02 15:04:05"), crashEnd.Format("15:04:05"),
 		len(crashLogs), formatLogsForAI(crashLogs))
 
-	analysis, err := geminiClient.Query(prompt)
+	analysis, err := geminiClient.Query(prompt, req.ImageData, req.MimeType)
 	if err != nil {
 		log.Printf("❌ Gemini error: %v", err)
 		http.Error(w, "AI analysis failed", 500)
@@ -778,9 +789,11 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 
 // AI Query Handler
 type AIQueryRequest struct {
-	Question string `json:"question"`
-	Service  string `json:"service,omitempty"`
-	Level    string `json:"level,omitempty"`
+	Question  string `json:"question"`
+	Service   string `json:"service,omitempty"`
+	Level     string `json:"level,omitempty"`
+	ImageData string `json:"image_data,omitempty"`
+	MimeType  string `json:"mime_type,omitempty"`
 }
 
 type AIQueryResponse struct {
@@ -944,7 +957,7 @@ CITE SOURCES: When referencing a specific log, include its ID in brackets like [
 
 Use plain text only. No ** or markdown. Add line breaks between sections.`, timeDesc, len(relevantLogs), errorCount, context, req.Question)
 
-	answer, err := geminiClient.Query(prompt)
+	answer, err := geminiClient.Query(prompt, req.ImageData, req.MimeType)
 	if err != nil {
 		log.Printf("❌ Gemini API error: %v", err)
 		http.Error(w, "Failed to query AI", http.StatusInternalServerError)
@@ -1043,7 +1056,7 @@ Top Services:`, totalLogs, errorCount, warningCount, infoCount)
 
 %s`, context)
 
-	summary, err := geminiClient.Query(prompt)
+	summary, err := geminiClient.Query(prompt, "", "")
 	if err != nil {
 		http.Error(w, "Failed to generate summary", http.StatusInternalServerError)
 		return

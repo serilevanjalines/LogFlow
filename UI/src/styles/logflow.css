@@ -915,6 +915,8 @@ body,
 
 .message.assistant {
   justify-content: flex-start;
+  padding-right: 40px;
+  /* Room for export button */
 }
 
 .message-content {
@@ -925,6 +927,8 @@ body,
   line-height: 1.5;
   word-wrap: break-word;
   white-space: pre-wrap;
+  position: relative;
+  /* For export button */
 }
 
 .message.user .message-content {
@@ -1105,6 +1109,99 @@ body,
   color: white;
 }
 
+/* Vision Upload Card */
+.vision-upload-card {
+  background: white;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+}
+
+.vision-upload-card:hover {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.02);
+}
+
+.vision-upload-label {
+  display: block;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.vision-upload-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vision-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vision-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.vision-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vision-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.vision-status {
+  background: var(--accent);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Analysis Header Row & PDF Button */
+.analysis-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.export-pdf-button {
+  background: white;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-pdf-button:hover {
+  background: var(--primary);
+  color: white;
+}
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1024px) {
   .sidebar {
@@ -1171,4 +1268,87 @@ body,
   .metrics-grid {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
+}
+
+/* AI Assistant Premium Add-ons */
+.msg-export-btn {
+  position: absolute;
+  right: -35px;
+  bottom: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.msg-export-btn:hover {
+  opacity: 1;
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.message-content:hover .msg-export-btn {
+  opacity: 1;
+}
+
+.msg-export-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.chat-upload-btn {
+  padding: 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.chat-upload-btn:hover {
+  color: var(--primary);
+}
+
+/* AI Assistant Inner Export Button */
+.assistant-msg-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.msg-export-btn-inner {
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.msg-export-btn-inner:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
 }

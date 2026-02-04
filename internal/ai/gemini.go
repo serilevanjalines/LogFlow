@@ -23,7 +23,13 @@ type Content struct {
 }
 
 type Part struct {
-	Text string `json:"text"`
+	Text       string      `json:"text,omitempty"`
+	InlineData *InlineData `json:"inlineData,omitempty"`
+}
+
+type InlineData struct {
+	MimeType string `json:"mimeType"`
+	Data     string `json:"data"`
 }
 
 type GeminiResponse struct {
@@ -41,17 +47,28 @@ func NewClient(apiKey string) *Client {
 	}
 }
 
-func (c *Client) Query(prompt string) (string, error) {
+func (c *Client) Query(prompt string, imageData string, mimeType string) (string, error) {
 	encodedKey := url.QueryEscape(c.APIKey)
 	baseURL := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", c.Model)
 	fullURL := fmt.Sprintf("%s?key=%s", baseURL, encodedKey)
 
+	parts := []Part{
+		{Text: prompt},
+	}
+
+	if imageData != "" && mimeType != "" {
+		parts = append(parts, Part{
+			InlineData: &InlineData{
+				MimeType: mimeType,
+				Data:     imageData,
+			},
+		})
+	}
+
 	reqBody := GeminiRequest{
 		Contents: []Content{
 			{
-				Parts: []Part{
-					{Text: prompt},
-				},
+				Parts: parts,
 			},
 		},
 	}
