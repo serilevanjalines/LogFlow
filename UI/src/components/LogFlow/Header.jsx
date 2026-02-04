@@ -39,6 +39,7 @@ export default function Header({ systemHealth }) {
             className="status-dot"
             style={{ backgroundColor: getStatusColor() }}
           />
+          <span className="status-label" style={{ color: '#6b7280', marginRight: '4px' }}>Status:</span>
           <span>{getStatusText()}</span>
         </div>
       </div>

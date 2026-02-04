@@ -12,10 +12,10 @@ export default function Sidebar({ logWindow }) {
         // ✅ Use UTC times for database query
         const toTime = new Date();
         const fromTime = new Date(toTime.getTime() - 3600000); // Last 1 hour in UTC
-        
+
         const from = logWindow?.from || fromTime.toISOString();
         const to = logWindow?.to || toTime.toISOString();
-        
+
         const data = await getLogs(from, to, 50);
         if (Array.isArray(data)) {
           setLogs(data.slice(0, 20));
@@ -51,7 +51,12 @@ export default function Sidebar({ logWindow }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h2>{logWindow ? 'Time Window Logs' : 'Live Logs'}</h2>
+        <h2>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#ef4444' }}>
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          {logWindow ? 'Time Window Logs' : 'LIVE ERROR FEED'}
+        </h2>
         <span className="log-count">{logs.length}</span>
       </div>
       <div className="logs-container">

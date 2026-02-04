@@ -6,12 +6,12 @@ import { compareLogsPeriods } from '../../../services/api';
 export default function TimeTravelDebugger({ onSelectLogWindow }) {
   const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   // Separate dates for healthy/crash
   const [healthyDate, setHealthyDate] = useState('2026-02-01');
   const [healthyTime, setHealthyTime] = useState('21:12');
   const [healthyPeriod, setHealthyPeriod] = useState('PM');
-  
+
   const [crashDate, setCrashDate] = useState('2026-02-01');
   const [crashTime, setCrashTime] = useState('21:22');
   const [crashPeriod, setCrashPeriod] = useState('PM');
@@ -28,7 +28,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
     // and toISOString() automatically converts LOCAL → UTC
     const istDate = new Date(`${date}T${normalizedTime}`);
     const utcString = istDate.toISOString();
-    
+
     console.log(`🕐 IST Input: ${date} ${normalizedTime} → UTC: ${utcString}`);
     return utcString;
   };
@@ -48,7 +48,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
 
   const handleCompare = async () => {
     if (!healthyDate || !healthyTime || !healthyPeriod || !crashDate || !crashTime || !crashPeriod) {
-      alert('❌ Please fill ALL fields');
+      alert('Please fill ALL fields');
       return;
     }
 
@@ -73,22 +73,65 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
       console.log('✅ Got back:', data);
     } catch (error) {
       console.error('TimeTravel failed:', error);
-      alert(`🚨 ${error.message}`);
+      alert(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  /* SVG Icons for Time Travel */
+  const Icons = {
+    Search: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    ),
+    Check: () => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    ),
+    Cross: () => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    ),
+    Zap: () => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+    Shield: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    ),
+    Alert: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    )
+  };
+
+  const stripEmojis = (text) => {
+    if (!text) return '';
+    // This regex covers most common emojis and symbols
+    return text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2194}-\u{2199}\u{21A9}-\u{21AA}\u{3297}\u{3299}\u{1F201}\u{1F202}\u{1F21A}\u{1F22F}\u{1F232}-\u{1F236}\u{1F238}-\u{1F23A}\u{1F250}\u{1F251}\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+  };
 
   return (
     <div className="tab-pane p-6">
       {/* CONTROLS */}
       <div className="time-travel-controls-wrapper">
-        <h2 className="controls-title">⏱️ Select Time Periods to Compare</h2>
-        
+        <h2 className="controls-title"><Icons.Search /> Select Time Periods to Compare</h2>
+
         <div className="compact-controls-grid">
           <div className="compact-control-card healthy-card">
-            <span className="compact-status-icon green">✓</span>
+            <span className="compact-status-icon green"><Icons.Check /></span>
             <span className="compact-label">Healthy Period</span>
             <input type="date" value={healthyDate} onChange={(e) => setHealthyDate(e.target.value)} className="compact-input" />
             <input type="time" value={healthyTime} onChange={(e) => setHealthyTime(e.target.value)} className="compact-input" />
@@ -99,7 +142,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
           </div>
 
           <div className="compact-control-card crash-card">
-            <span className="compact-status-icon red">✕</span>
+            <span className="compact-status-icon red"><Icons.Cross /></span>
             <span className="compact-label">Crash Period</span>
             <input type="date" value={crashDate} onChange={(e) => setCrashDate(e.target.value)} className="compact-input" />
             <input type="time" value={crashTime} onChange={(e) => setCrashTime(e.target.value)} className="compact-input" />
@@ -118,7 +161,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
             </>
           ) : (
             <>
-              ⚡ Compare 5 Minute Periods
+              <Icons.Zap /> Compare Periods
             </>
           )}
         </button>
@@ -130,7 +173,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
           {/* Compact Stats Badges */}
           <div className="stats-badges-row">
             <div className="stat-badge healthy-badge">
-              <span className="badge-icon">✓</span>
+              <span className="badge-icon"><Icons.Check /></span>
               <div className="badge-content">
                 <span className="badge-label">Healthy Period</span>
                 <div className="badge-stats">
@@ -141,7 +184,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
             </div>
 
             <div className="stat-badge crash-badge">
-              <span className="badge-icon">✕</span>
+              <span className="badge-icon"><Icons.Cross /></span>
               <div className="badge-content">
                 <span className="badge-label">Crash Period</span>
                 <div className="badge-stats">
@@ -154,14 +197,14 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
 
           {/* Full Width Analysis */}
           <div className="analysis-card">
-            <h3 className="analysis-title">🤖 LogFlow Analysis</h3>
+            <h3 className="analysis-title"><Icons.Shield /> Security Analysis</h3>
             <div className="analysis-text-container">
               {comparison.analysis ? (
                 <pre className="analysis-content">
-                  {comparison.analysis}
+                  {stripEmojis(comparison.analysis)}
                 </pre>
               ) : (
-                <p className="text-gray-400 text-lg">⚠️ No significant divergence detected</p>
+                <p className="text-gray-400 text-lg"><Icons.Alert /> No significant divergence detected</p>
               )}
             </div>
           </div>
