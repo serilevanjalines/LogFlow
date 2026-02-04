@@ -3,13 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { getLogs } from '../../services/api';
 
-export default function Sidebar() {
+export default function Sidebar({ logWindow }) {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const data = await getLogs(new Date(Date.now() - 3600000).toISOString(), new Date().toISOString(), 50);
+        // ✅ Use UTC times for database query
+        const toTime = new Date();
+        const fromTime = new Date(toTime.getTime() - 3600000); // Last 1 hour in UTC
+        
+        const from = logWindow?.from || fromTime.toISOString();
+        const to = logWindow?.to || toTime.toISOString();
+        
+        const data = await getLogs(from, to, 50);
         if (Array.isArray(data)) {
           setLogs(data.slice(0, 20));
         } else if (data.logs && Array.isArray(data.logs)) {
@@ -21,9 +28,12 @@ export default function Sidebar() {
     };
 
     fetchLogs();
-    const interval = setInterval(fetchLogs, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!logWindow) {
+      const interval = setInterval(fetchLogs, 3000);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [logWindow]);
 
   const getLogLevelClass = (level) => {
     switch (level?.toUpperCase()) {
@@ -41,7 +51,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h2>Live Logs</h2>
+        <h2>{logWindow ? 'Time Window Logs' : 'Live Logs'}</h2>
         <span className="log-count">{logs.length}</span>
       </div>
       <div className="logs-container">

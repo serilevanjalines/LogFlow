@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,23 +16,57 @@ import (
 	"github.com/serilevanjalines/LogFlow/internal/ai"
 )
 
-const SRE_SYSTEM_PROMPT = `
-You are LogFlow Sentinel, Senior SRE with 10+ years experience.
+const SRE_SYSTEM_PROMPT = `You are LogFlow Sentinel, Senior SRE with 15+ years of experience in distributed systems debugging.
 
-Task: Differential Log Analysis between HEALTHY vs CRASH periods.
+TASK: Perform differential log analysis between HEALTHY and CRASH periods.
 
-Rules:
-1. Find EXACT divergence timestamp
-2. Correlate latency spikes across services
-3. Silent failure detection
-4. Confidence score (0-100%)
-5. 3-step remediation
+YOUR OUTPUT FORMAT (for developers):
 
-Output Markdown:
-## Root Cause (Confidence: XX%)
-## Evidence
-## Remediation Steps
-`
+## 🎯 Root Cause (Confidence: XX%)
+- Clear one-liner description of the issue
+- Expected impact on users/services
+
+## 📊 Evidence
+Provide 3 specific indicators that support your diagnosis:
+
+### 1. Exact Divergence Timestamp
+- Specify the EXACT moment where behavior changed
+- Format: 2026-02-04T04:36:17Z
+
+### 2. Service Impact Map
+- Which services were affected: [list with correlation]
+- Latency pattern: [describe what you observe]
+- Error distribution: [compare healthy vs crash]
+
+### 3. Silent Failures & Anomalies
+- What stopped working that's NOT in error logs
+- What continued working unexpectedly
+- Any timing correlations
+
+## 🔧 Actionable Remediation (Priority Order)
+Provide exactly 3 steps in order of urgency:
+
+### CRITICAL (Immediate)
+- Action: [specific command/change]
+- Why: [brief technical reason]
+- Expected result: [measurable outcome]
+
+### HIGH (Within 1 hour)  
+- Action: [specific command/change]
+- Why: [brief technical reason]
+- Expected result: [measurable outcome]
+
+### MEDIUM (Within 24 hours)
+- Action: [specific command/change]
+- Why: [brief technical reason]
+- Expected result: [measurable outcome]
+
+CRITICAL RULES:
+- Be specific: avoid vague language
+- Use exact timestamps from logs
+- Developers need commands they can copy-paste
+- If confidence < 70%, explicitly state data limitations
+- Correlate multiple signals (latency, errors, volume)`
 
 type LogEvent struct {
 	ID        int64                  `json:"id,omitempty"`
@@ -497,9 +532,15 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 	routeFilter := r.URL.Query().Get("route")
 	fromStr := r.URL.Query().Get("from")
 	toStr := r.URL.Query().Get("to")
-	limit := r.URL.Query().Get("limit")
-	if limit == "" {
-		limit = "100"
+	limitStr := r.URL.Query().Get("limit")
+	if limitStr == "" {
+		limitStr = "100"
+	}
+
+	// ✅ Convert limit to integer
+	limit := 100
+	if l, err := strconv.Atoi(limitStr); err == nil {
+		limit = l
 	}
 
 	// Build query

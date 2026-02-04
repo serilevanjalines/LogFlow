@@ -24,17 +24,57 @@ export const apiCall = async (endpoint, options = {}) => {
 export const checkHealth = () => apiCall('/health');
 
 // Logs (Sidebar uses this)
-export const getLogs = (startTime, endTime, limit = 50) => 
-  apiCall(`/logs?start=${startTime}&end=${endTime}&limit=${limit}`);
+export const getLogs = (fromTime, toTime, limit = 50) => {
+  const params = new URLSearchParams();
+  
+  // ✅ ENSURE times are in UTC before sending to server
+  if (fromTime) {
+    const fromDate = new Date(fromTime);
+    params.set('from', fromDate.toISOString()); // toISOString() always returns UTC
+  }
+  if (toTime) {
+    const toDate = new Date(toTime);
+    params.set('to', toDate.toISOString()); // toISOString() always returns UTC
+  }
+  if (limit) params.set('limit', String(limit));
+  const query = params.toString();
+  return apiCall(`/logs${query ? `?${query}` : ''}`);
+};
 
 // Metrics
 export const getMetrics = async () => {
   const data = await apiCall('/metrics');
-  const logCounts = data.log_counts || {};
+  const logCounts = data?.log_counts || {};
+  const topServices = data?.top_services || {};
+  const totalLogs = Object.values(logCounts).reduce(
+    (sum, count) => sum + Number(count || 0),
+    0
+  );
+  const errorCount = Number(
+    logCounts.ERROR ?? logCounts.error ?? logCounts.Error ?? 0
+  );
+  const derivedErrorRate = totalLogs
+    ? Math.round((errorCount / totalLogs) * 100)
+    : 0;
+
+  const services = Array.isArray(data?.services)
+    ? data.services
+    : Object.entries(topServices).map(([name]) => ({
+        name,
+        healthy: true,
+      }));
+
   return {
+    uptime: data?.uptime ?? 0,
+    error_rate: data?.error_rate ?? derivedErrorRate,
+    avg_latency: data?.avg_latency ?? 0,
+    active_connections: data?.active_connections ?? 0,
+    memory_usage: data?.memory_usage ?? 0,
+    cpu_usage: data?.cpu_usage ?? 0,
+    requests_per_second: data?.requests_per_second ?? 0,
+    services,
     log_counts: logCounts,
-    top_services: data.top_services,
-    // ... rest unchanged
+    top_services: topServices,
   };
 };
 

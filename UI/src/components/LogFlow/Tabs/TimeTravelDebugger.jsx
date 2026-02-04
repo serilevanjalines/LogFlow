@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { compareLogsPeriods } from '../../../services/api';
 
-export default function TimeTravelDebugger() {
+export default function TimeTravelDebugger({ onSelectLogWindow }) {
   const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(false);
   
@@ -18,69 +18,66 @@ export default function TimeTravelDebugger() {
 
   const formatTimeForAPI = (date, time, period) => {
     let [hours, minutes] = time.split(':');
-    let h = parseInt(hours);
-    
-    // Convert 12-hour to 24-hour format
+    let h = parseInt(hours, 10);
+
     if (period === 'PM' && h !== 12) h += 12;
     if (period === 'AM' && h === 12) h = 0;
+
+    const normalizedTime = `${String(h).padStart(2, '0')}:${minutes}:00`;
+    // ✅ User inputs IST time. JavaScript's new Date() interprets it as local time,
+    // and toISOString() automatically converts LOCAL → UTC
+    const istDate = new Date(`${date}T${normalizedTime}`);
+    const utcString = istDate.toISOString();
     
-    // IST = UTC + 5:30, so subtract 5:30 to convert to UTC
-    let utcHours = h - 5;
-    let utcMinutes = parseInt(minutes) - 30;
-    
-    // Handle negative minutes
-    if (utcMinutes < 0) {
-      utcHours -= 1;
-      utcMinutes += 60;
-    }
-    
-    // Handle negative hours (previous day)
-    if (utcHours < 0) {
-      utcHours += 24;
-      // For simplicity, assume same day for now
-    }
-    
-    return `${date}T${utcHours.toString().padStart(2, '0')}:${utcMinutes.toString().padStart(2, '0')}:00Z`;
+    console.log(`🕐 IST Input: ${date} ${normalizedTime} → UTC: ${utcString}`);
+    return utcString;
   };
 
   // Create 5min window around timestamp for log querying
-  const createTimeWindow = (date, time, period) => {
+  const createTimeWindow = (date, time, period, minutes = 7) => {
     const startISO = formatTimeForAPI(date, time, period);
     const start = new Date(startISO);
-    const end = new Date(start.getTime() + 5 * 60 * 1000); // +5min window
-    
+    const end = new Date(start.getTime() + minutes * 60 * 1000);
+
     return {
-      healthy_start: start.toISOString(),
-      healthy_end: end.toISOString()
+      from: start.toISOString(),
+      to: end.toISOString(),
     };
   };
 
 
-const handleCompare = async () => {
-  if (!healthyDate || !healthyTime || !healthyPeriod || !crashDate || !crashTime || !crashPeriod) {
-    alert('❌ Please fill ALL fields');
-    return;
-  }
+  const handleCompare = async () => {
+    if (!healthyDate || !healthyTime || !healthyPeriod || !crashDate || !crashTime || !crashPeriod) {
+      alert('❌ Please fill ALL fields');
+      return;
+    }
 
-  try {
-    // Format EXACTLY like screenshot: 2026-02-01T13:29:00Z
-    const healthyISO = formatTimeForAPI(healthyDate, healthyTime, healthyPeriod);
-    const crashISO = formatTimeForAPI(crashDate, crashTime, crashPeriod);
-    
-    console.log('🚀 Sending to /ai/compare:', { healthyISO, crashISO }); // DEBUG
-    
-    setLoading(true);
-    const data = await compareLogsPeriods(healthyISO, crashISO); // 2 params only!
-    setComparison(data);
-    
-    console.log('✅ Got back:', data); // Should show healthy_count:28, crash_count:94
-  } catch (error) {
-    console.error('TimeTravel failed:', error);
-    alert(`🚨 ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const healthyISO = formatTimeForAPI(healthyDate, healthyTime, healthyPeriod);
+      const crashISO = formatTimeForAPI(crashDate, crashTime, crashPeriod);
+
+      console.log('🚀 Sending to /ai/compare:', { healthyISO, crashISO });
+
+      setLoading(true);
+      const data = await compareLogsPeriods(healthyISO, crashISO);
+      setComparison(data);
+
+      if (onSelectLogWindow) {
+        const crashWindow = createTimeWindow(crashDate, crashTime, crashPeriod, 7);
+        onSelectLogWindow({
+          ...crashWindow,
+          label: 'Crash Period',
+        });
+      }
+
+      console.log('✅ Got back:', data);
+    } catch (error) {
+      console.error('TimeTravel failed:', error);
+      alert(`🚨 ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (

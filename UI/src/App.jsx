@@ -10,6 +10,7 @@ import './styles/logflow.css';
 export default function App() {
   const [activeTab, setActiveTab] = useState('debugger');
   const [systemHealth, setSystemHealth] = useState('healthy');
+  const [logWindow, setLogWindow] = useState(null);
 
   useEffect(() => {
     const handleCheckHealth = async () => {
@@ -29,10 +30,14 @@ export default function App() {
 
   return (
     <div className="logflow-container">
-      <Sidebar />
+      <Sidebar logWindow={logWindow} />
       <div className="logflow-main">
         <Header systemHealth={systemHealth} />
-        <MainContent activeTab={activeTab} setActiveTab={setActiveTab} />
+        <MainContent
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onSelectLogWindow={setLogWindow}
+        />
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import TimeTravelDebugger from './Tabs/TimeTravelDebugger';
 import AiAssistant from './Tabs/AiAssistant';
 import SystemMetrics from './Tabs/SystemMetrics';
 
-export default function MainContent({ activeTab, setActiveTab }) {
+export default function MainContent({ activeTab, setActiveTab, onSelectLogWindow }) {
   const tabs = [
     { id: 'debugger', label: 'Time-Travel Debugger', icon: '⏮️' },
     { id: 'ai', label: 'AI Assistant', icon: '🤖' },
@@ -28,7 +28,9 @@ export default function MainContent({ activeTab, setActiveTab }) {
       </div>
 
       <div className="tabs-content">
-        {activeTab === 'debugger' && <TimeTravelDebugger />}
+        {activeTab === 'debugger' && (
+          <TimeTravelDebugger onSelectLogWindow={onSelectLogWindow} />
+        )}
         {activeTab === 'ai' && <AiAssistant />}
         {activeTab === 'metrics' && <SystemMetrics />}
       </div>
