@@ -11,6 +11,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('debugger');
   const [systemHealth, setSystemHealth] = useState('healthy');
   const [logWindow, setLogWindow] = useState(null);
+  const [citedLogData, setCitedLogData] = useState({ id: null, ts: 0 });
+
+  const handleCiteLog = (id) => {
+    setCitedLogData({ id, ts: Date.now() });
+  };
 
   useEffect(() => {
     const handleCheckHealth = async () => {
@@ -30,13 +35,14 @@ export default function App() {
 
   return (
     <div className="logflow-container">
-      <Sidebar logWindow={logWindow} />
+      <Sidebar logWindow={logWindow} highlightedLogId={citedLogData.id} scrollTrigger={citedLogData.ts} />
       <div className="logflow-main">
         <Header systemHealth={systemHealth} />
         <MainContent
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onSelectLogWindow={setLogWindow}
+          onCiteLog={handleCiteLog}
         />
       </div>
     </div>

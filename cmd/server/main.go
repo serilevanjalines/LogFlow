@@ -19,6 +19,25 @@ import (
 	"github.com/serilevanjalines/LogFlow/internal/ai"
 )
 
+// PII Regex Patterns
+var (
+	emailRegex = regexp.MustCompile(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
+	ipRegex    = regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`)
+	ccRegex    = regexp.MustCompile(`\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b`)
+)
+
+// scrubPII removes sensitive information from log messages before sending to AI
+func scrubPII(text string) string {
+	if text == "" {
+		return ""
+	}
+	// Order matters: most specific to most general
+	text = emailRegex.ReplaceAllString(text, "[EMAIL_MASKED]")
+	text = ccRegex.ReplaceAllString(text, "[CREDIT_CARD_MASKED]")
+	text = ipRegex.ReplaceAllString(text, "[IP_MASKED]")
+	return text
+}
+
 const SRE_SYSTEM_PROMPT = `You are LogFlow, Senior SRE with 15+ years of experience in distributed systems debugging.
 
 TASK: Perform differential log analysis between HEALTHY and CRASH periods.
@@ -70,6 +89,7 @@ CRITICAL RULES:
 - Use exact timestamps from logs
 - Developers need commands they can copy-paste
 - If confidence < 70%, explicitly state data limitations
+- CITE YOUR SOURCES: When referencing a specific log line, ALWAYS include its ID in brackets, like this: [Log #123]
 - Add line breaks between sections for readability`
 
 type LogEvent struct {
@@ -139,7 +159,8 @@ func getLogsInTimeRange(startTime, endTime time.Time, limit int) []LogEvent {
 func formatLogsForAI(logs []LogEvent) string {
 	var sb strings.Builder
 	for _, log := range logs {
-		sb.WriteString(fmt.Sprintf("[%s] %s %s: %s\n", log.Timestamp, log.Service, log.Level, log.Message))
+		scrubbedMsg := scrubPII(log.Message)
+		sb.WriteString(fmt.Sprintf("[%s] ID:%d %s %s: %s\n", log.Timestamp, log.ID, log.Service, log.Level, scrubbedMsg))
 	}
 	return sb.String()
 }
@@ -742,6 +763,9 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 			json.Unmarshal(metadataJSON, &evt.Metadata)
 		}
 
+		// Apply PII scrubbing to sidebar logs as well
+		evt.Message = scrubPII(evt.Message)
+
 		logs = append(logs, evt)
 	}
 
@@ -765,6 +789,8 @@ type AIQueryResponse struct {
 	LogCount     int        `json:"log_count"`
 	ErrorCount   int        `json:"error_count"`
 	TimeRange    string     `json:"time_range"`
+	FromTime     string     `json:"from_time"`
+	ToTime       string     `json:"to_time"`
 	Services     []string   `json:"services"`
 }
 
@@ -867,8 +893,9 @@ func aiQueryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		relevantLogs = append(relevantLogs, evt)
-		context += fmt.Sprintf("[%s] Service: %s, Level: %s, Message: %s\n",
-			evt.Timestamp, evt.Service, evt.Level, evt.Message)
+		scrubbedMsg := scrubPII(evt.Message)
+		context += fmt.Sprintf("[%s] ID:%d Service: %s, Level: %s, Message: %s\n",
+			evt.Timestamp, evt.ID, evt.Service, evt.Level, scrubbedMsg)
 	}
 
 	// Build summary for Gemini
@@ -913,6 +940,8 @@ TIME STARTED:
 ACTION REQUIRED:
 [numbered steps]
 
+CITE SOURCES: When referencing a specific log, include its ID in brackets like [Log #123]
+
 Use plain text only. No ** or markdown. Add line breaks between sections.`, timeDesc, len(relevantLogs), errorCount, context, req.Question)
 
 	answer, err := geminiClient.Query(prompt)
@@ -928,6 +957,8 @@ Use plain text only. No ** or markdown. Add line breaks between sections.`, time
 		LogCount:     len(relevantLogs),
 		ErrorCount:   errorCount,
 		TimeRange:    timeDesc,
+		FromTime:     fromTime.Format(time.RFC3339),
+		ToTime:       toTime.Format(time.RFC3339),
 		Services:     services,
 	}
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getLogs } from '../../services/api';
 
-export default function Sidebar({ logWindow }) {
+export default function Sidebar({ logWindow, highlightedLogId, scrollTrigger }) {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
@@ -15,13 +15,16 @@ export default function Sidebar({ logWindow }) {
 
         const from = logWindow?.from || fromTime.toISOString();
         const to = logWindow?.to || toTime.toISOString();
+        const limit = logWindow ? 200 : 50;
 
-        const data = await getLogs(from, to, 50);
-        if (Array.isArray(data)) {
-          setLogs(data.slice(0, 20));
-        } else if (data.logs && Array.isArray(data.logs)) {
-          setLogs(data.logs.slice(0, 20));
+        const data = await getLogs(from, to, limit);
+        let logList = Array.isArray(data) ? data : (data.logs || []);
+
+        if (!logWindow) {
+          logList = logList.slice(0, 20);
         }
+
+        setLogs(logList);
       } catch (error) {
         console.log('[v0] Error fetching logs:', error);
       }
@@ -34,6 +37,15 @@ export default function Sidebar({ logWindow }) {
     }
     return undefined;
   }, [logWindow]);
+
+  useEffect(() => {
+    if (highlightedLogId) {
+      const element = document.getElementById(`log-${highlightedLogId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [highlightedLogId, scrollTrigger]);
 
   const getLogLevelClass = (level) => {
     switch (level?.toUpperCase()) {
@@ -62,7 +74,11 @@ export default function Sidebar({ logWindow }) {
       <div className="logs-container">
         {logs.length > 0 ? (
           logs.map((log, index) => (
-            <div key={index} className={`log-entry ${getLogLevelClass(log.level)}`}>
+            <div
+              key={index}
+              id={`log-${log.id}`}
+              className={`log-entry ${getLogLevelClass(log.level)} ${String(highlightedLogId) === String(log.id) ? 'highlighted' : ''}`}
+            >
               <div className="log-level">{log.level}</div>
               <div className="log-message">{log.message}</div>
               <div className="log-time">

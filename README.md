@@ -5,13 +5,13 @@
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Go](https://img.shields.io/badge/Go-1.x-00ADD8?logo=go)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
-![Gemini](https://img.shields.io/badge/AI-Gemini%201.5-4285F4)
+![Gemini](https://img.shields.io/badge/AI-Gemini%203-4285F4)
 
 ---
 
 ## 🎯 Overview
 
-LogFlow is a high-performance SRE observability platform that combines real-time log monitoring with AI-powered differential analysis. It features a revolutionary **Time-Travel Debugger** that compares healthy and crash periods to identify root causes instantly using Google's Gemini 1.5 AI.
+LogFlow is a high-performance SRE observability platform that combines real-time log monitoring with AI-powered differential analysis. It features a revolutionary **Time-Travel Debugger** that compares healthy and crash periods to identify root causes instantly using the **Gemini 3 API**.
 
 The interface follows a professional **Enterprise Elite** design system: a clean, high-contrast white palette with professional SVG iconography and zero emoji clutter.
 
@@ -32,7 +32,7 @@ The interface follows a professional **Enterprise Elite** design system: a clean
 ### Backend
 - **Go (Golang)**: High-performance HTTP server and log ingestion.
 - **PostgreSQL (Supabase)**: Cloud-hosted database for persistent log storage.
-- **Google Gemini 1.5**: Advanced AI model for log reasoning and SRE insights.
+- **Gemini 3 API**: The latest high-performance AI model for log reasoning and SRE insights.
 
 ### Frontend
 - **React 18 & Vite**: Modern, responsive component architecture with lightning-fast build times.
@@ -141,6 +141,25 @@ LogFlow/
 - **No Emojis**: The interface and AI responses follow a strict professional standard using text labels and SVG icons.
 - **White Palette**: High-contrast, clean corporate aesthetic for reduced cognitive load.
 - **Differential Reasoning**: AI is tuned to focus on *evidence-based* root cause identification.
+- **PII Scrubbing**: Automatic masking of sensitive data (IPs, Emails, CCs) before AI analysis.
+- **Truth-Citations**: AI cites specific Log IDs which are automatically highlighted in the UI to prevent hallucinations.
+
+---
+
+## 🛡️ Privacy & Security (Hackathon Special)
+
+LogFlow includes a high-performance **Go-based PII Scrubber** and a **Truth-Citation System** to ensure data privacy and AI reliability.
+
+### **How to Verify the High-Performance Features:**
+
+#### 1. PII Scrubber
+- **Prompt**: *"Show me the recent login logs including IP addresses"*
+- **Observation**: Gemini analyzes the logs but only sees/reports sanitized tokens like `[IP_MASKED]`.
+
+#### 2. Truth-Citation System (No-Hallucination Proof)
+- **Action**: Run a **Time-Travel Comparison**.
+- **Observation**: When Gemini identifies a root cause, check for references like `[Log #123]`.
+- **Result**: The UI will **automatically scroll to and highlight** that exact log line in the sidebar with a pulsing glow, proving the AI is reading real data.
 
 ---
 

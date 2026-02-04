@@ -6,7 +6,7 @@ import AiAssistant from './Tabs/AiAssistant';
 import SystemMetrics from './Tabs/SystemMetrics';
 import AdvancedMetrics from './Tabs/AdvancedMetrics';
 
-export default function MainContent({ activeTab, setActiveTab, onSelectLogWindow }) {
+export default function MainContent({ activeTab, setActiveTab, onSelectLogWindow, onCiteLog }) {
   /* SVG Icons matching HQ System Outline Style */
   const Icons = {
     Debugger: () => (
@@ -47,9 +47,9 @@ export default function MainContent({ activeTab, setActiveTab, onSelectLogWindow
 
       <div className="tabs-content">
         {activeTab === 'debugger' && (
-          <TimeTravelDebugger onSelectLogWindow={onSelectLogWindow} />
+          <TimeTravelDebugger onSelectLogWindow={onSelectLogWindow} onCiteLog={onCiteLog} />
         )}
-        {activeTab === 'ai' && <AiAssistant />}
+        {activeTab === 'ai' && <AiAssistant onCiteLog={onCiteLog} onSelectLogWindow={onSelectLogWindow} />}
         {activeTab === 'metrics' && <SystemMetrics />}
         {activeTab === 'advanced' && <AdvancedMetrics />}
       </div>

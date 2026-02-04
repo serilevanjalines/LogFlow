@@ -37,13 +37,18 @@ func main() {
 			userID := fmt.Sprintf("user_%d", (i%10)+1)
 			productID := fmt.Sprintf("PROD-%03d", (i%5)+1)
 			duration := 45 + (i * 2)
-			
-			message := fmt.Sprintf("Order processed successfully user_id=%s product_id=%s duration=%dms current_stock=%d", 
+
+			message := fmt.Sprintf("Order processed successfully user_id=%s product_id=%s duration=%dms current_stock=%d",
 				userID, productID, duration, 100-i)
+
+			// Add a log with PII to verify the scrubber
+			if i == 1 {
+				message = fmt.Sprintf("User login attempt from ip=192.168.1.%d user_id=%s email=user_%s@example.com", i+10, userID, userID)
+			}
 
 			if i%5 == 0 {
 				level = "WARNING"
-				message = fmt.Sprintf("Slow request detected user_id=%s duration=%dms attempts=%d", 
+				message = fmt.Sprintf("Slow request detected user_id=%s duration=%dms attempts=%d",
 					userID, duration+200, (i%3)+1)
 			}
 

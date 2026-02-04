@@ -153,6 +153,29 @@ body,
   background: rgba(77, 144, 254, 0.05);
 }
 
+.log-entry.highlighted {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.2) !important;
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+  transform: scale(1.02);
+  z-index: 10;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.6);
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+  }
+}
+
 .log-level {
   font-size: 10px;
   font-weight: 700;

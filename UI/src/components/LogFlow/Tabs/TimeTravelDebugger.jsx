@@ -3,7 +3,14 @@
 import React, { useState } from 'react';
 import { compareLogsPeriods } from '../../../services/api';
 
-export default function TimeTravelDebugger({ onSelectLogWindow }) {
+export default function TimeTravelDebugger({ onSelectLogWindow, onCiteLog }) {
+  const extractCitation = (text) => {
+    const match = text.match(/\[Log #(\d+)\]/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    return null;
+  };
   const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -61,6 +68,12 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
       setLoading(true);
       const data = await compareLogsPeriods(healthyISO, crashISO);
       setComparison(data);
+
+      // Handle citation highlight
+      if (onCiteLog && data.analysis) {
+        const citedId = extractCitation(data.analysis);
+        if (citedId) onCiteLog(citedId);
+      }
 
       if (onSelectLogWindow) {
         const crashWindow = createTimeWindow(crashDate, crashTime, crashPeriod, 7);
@@ -121,6 +134,37 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
     if (!text) return '';
     // This regex covers most common emojis and symbols
     return text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2194}-\u{2199}\u{21A9}-\u{21AA}\u{3297}\u{3299}\u{1F201}\u{1F202}\u{1F21A}\u{1F22F}\u{1F232}-\u{1F236}\u{1F238}-\u{1F23A}\u{1F250}\u{1F251}\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+  };
+
+  const renderTextWithCitations = (text) => {
+    if (!text) return null;
+    const cleanText = stripEmojis(text);
+    const parts = cleanText.split(/(\[Log #\d+\])/g);
+    return parts.map((part, i) => {
+      const match = part.match(/\[Log #(\d+)\]/);
+      if (match) {
+        const id = match[1];
+        return (
+          <span
+            key={i}
+            className="citation-link"
+            onClick={() => onCiteLog && onCiteLog(id)}
+            style={{
+              color: '#2563eb',
+              fontWeight: '700',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              padding: '0 4px',
+              borderRadius: '4px'
+            }}
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   return (
@@ -201,7 +245,7 @@ export default function TimeTravelDebugger({ onSelectLogWindow }) {
             <div className="analysis-text-container">
               {comparison.analysis ? (
                 <pre className="analysis-content">
-                  {stripEmojis(comparison.analysis)}
+                  {renderTextWithCitations(comparison.analysis)}
                 </pre>
               ) : (
                 <p className="text-gray-400 text-lg"><Icons.Alert /> No significant divergence detected</p>
