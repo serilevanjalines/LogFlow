@@ -35,7 +35,12 @@ export default function App() {
 
   return (
     <div className="logflow-container">
-      <Sidebar logWindow={logWindow} highlightedLogId={citedLogData.id} scrollTrigger={citedLogData.ts} />
+      <Sidebar
+        logWindow={logWindow}
+        highlightedLogId={citedLogData.id}
+        scrollTrigger={citedLogData.ts}
+        onSwitchTab={setActiveTab}
+      />
       <div className="logflow-main">
         <Header systemHealth={systemHealth} />
         <MainContent

@@ -124,18 +124,20 @@ body,
 }
 
 .log-entry {
-  padding: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
   border-left: 3px solid var(--primary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 4px;
 }
 
 .log-entry:hover {
-  background: rgba(77, 144, 254, 0.1);
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
 }
 
 .log-entry.log-error {
@@ -395,7 +397,7 @@ body,
 
 /* Time-Travel Controls */
 .time-travel-controls-wrapper {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .controls-title {
@@ -429,12 +431,12 @@ body,
 
 .compact-control-card.healthy-card {
   border-left: 4px solid var(--accent);
-  background: #ffffff;
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.02), #ffffff);
 }
 
 .compact-control-card.crash-card {
   border-left: 4px solid var(--error);
-  background: #ffffff;
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.02), #ffffff);
 }
 
 .compact-control-card:hover {
@@ -512,23 +514,31 @@ body,
 }
 
 .compare-button {
-  width: 100%;
-  padding: 18px 32px;
-  background: linear-gradient(135deg, var(--primary) 0%, #357af5 100%);
+  width: auto;
+  min-width: 180px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 6px;
   color: white;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  box-shadow: 0 4px 16px rgba(77, 144, 254, 0.4);
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  margin: 0 auto;
+}
+
+.compare-button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
+  background: linear-gradient(135deg, #3b82f6 0%, var(--primary) 100%);
 }
 
 .compare-button:hover:not(:disabled) {
@@ -1109,12 +1119,21 @@ body,
   color: white;
 }
 
+/* Margin Helpers */
+.mt-4 {
+  margin-top: 8px;
+}
+
+.mt-8 {
+  margin-top: 24px;
+}
+
 /* Vision Upload Card */
 .vision-upload-card {
   background: white;
   border: 1px dashed var(--border-color);
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   transition: all 0.2s ease;
 }
 
@@ -1351,4 +1370,31 @@ body,
   color: white;
   border-color: var(--primary);
   transform: translateY(-1px);
+}
+
+/* Simulate Button Style */
+.simulate-button {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: var(--primary);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.simulate-button:hover:not(:disabled) {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+}
+
+.simulate-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
