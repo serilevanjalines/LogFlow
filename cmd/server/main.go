@@ -384,6 +384,14 @@ func main() {
 	http.HandleFunc("/ai/query", corsMiddleware(aiQueryHandler))
 	http.HandleFunc("/ai/summary", corsMiddleware(aiSummaryHandler))
 	http.HandleFunc("/health", corsMiddleware(healthHandler))
+	http.HandleFunc("/", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"message": "LogFlow API is running", "version": "1.0.0", "status": "active"}`)
+	}))
 	http.HandleFunc("/api/compare", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/ai/compare?"+r.URL.RawQuery, http.StatusMovedPermanently)
 	}))
