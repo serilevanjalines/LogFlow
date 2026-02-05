@@ -38,6 +38,38 @@ func scrubPII(text string) string {
 	return text
 }
 
+// Pre-compiled regexes for advanced metrics
+var (
+	userRe     = regexp.MustCompile(`user_id=([a-zA-Z0-9_-]+)`)
+	orderRe    = regexp.MustCompile(`order_id=([A-Z0-9-]+)`)
+	productRe  = regexp.MustCompile(`product_id=([A-Z0-9-]+)`)
+	reasonRe   = regexp.MustCompile(`reason=([a-zA-Z_]+)`)
+	durationRe = regexp.MustCompile(`duration=(\d+)ms`)
+	timeoutRe  = regexp.MustCompile(`timeout=(\d+)ms`)
+	attemptsRe = regexp.MustCompile(`attempts=(\d+)`)
+	stockRe    = regexp.MustCompile(`current_stock=(\d+)`)
+)
+
+func seedDB() {
+	var count int
+	db.QueryRow("SELECT COUNT(*) FROM logs").Scan(&count)
+	if count > 0 {
+		return
+	}
+
+	log.Println("🌱 Seeding database with initial logs for judges...")
+	initialLogs := []LogEvent{
+		{Service: "system-init", Level: "INFO", Message: "LogFlow Observation Node v1.0.0 started", Timestamp: time.Now().Add(-10 * time.Minute).Format(time.RFC3339)},
+		{Service: "database", Level: "INFO", Message: "PostgreSQL Connection Pool initialized (max_conns=25)", Timestamp: time.Now().Add(-9 * time.Minute).Format(time.RFC3339)},
+		{Service: "api-gateway", Level: "INFO", Message: "LogFlow API listening on port 8080", Timestamp: time.Now().Add(-8 * time.Minute).Format(time.RFC3339)},
+		{Service: "auth-service", Level: "WARNING", Message: "Latency spike detected in session-store (320ms)", Timestamp: time.Now().Add(-5 * time.Minute).Format(time.RFC3339)},
+	}
+
+	for _, l := range initialLogs {
+		db.Exec("INSERT INTO logs (timestamp, service, level, message) VALUES ($1, $2, $3, $4)", l.Timestamp, l.Service, l.Level, l.Message)
+	}
+}
+
 const SRE_SYSTEM_PROMPT = `You are LogFlow, Senior SRE with 15+ years of experience in distributed systems debugging.
 
 TASK: Perform differential log analysis between HEALTHY and CRASH periods.
@@ -367,6 +399,9 @@ func main() {
 	}
 	defer db.Close()
 
+	// Seed database if empty
+	seedDB()
+
 	// Initialize Gemini client
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
@@ -492,12 +527,13 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get counts by level
+	// Get counts by level in last 24 hours (Performance fix: avoid scanning entire history)
 	query := `
 		SELECT
 			level,
 			COUNT(*) as count
 		FROM logs
+		WHERE timestamp > NOW() - INTERVAL '24 hours'
 		GROUP BY level
 	`
 
@@ -539,13 +575,13 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Get top services by error count
+	// Get top services by error count in last 24 hours
 	serviceQuery := `
 		SELECT
 			service,
 			COUNT(*) as count
 		FROM logs
-		WHERE level = 'ERROR'
+		WHERE level = 'ERROR' AND timestamp > NOW() - INTERVAL '24 hours'
 		GROUP BY service
 		ORDER BY count DESC
 		LIMIT 5
@@ -574,10 +610,11 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Get all healthy services (services with INFO or no errors)
+	// Get all healthy services in last 24 hours
 	allServicesQuery := `
 		SELECT DISTINCT service
 		FROM logs
+		WHERE timestamp > NOW() - INTERVAL '24 hours'
 		ORDER BY service ASC
 	`
 
@@ -615,8 +652,8 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		errorRate = (errorLogs * 100) / totalLogs
 	}
 
-	// Get unique services count
-	uniqueServicesQuery := `SELECT COUNT(DISTINCT service) FROM logs`
+	// Get unique services count in last 24 hours
+	uniqueServicesQuery := `SELECT COUNT(DISTINCT service) FROM logs WHERE timestamp > NOW() - INTERVAL '24 hours'`
 	var serviceCount int
 	db.QueryRow(uniqueServicesQuery).Scan(&serviceCount)
 
@@ -1137,38 +1174,32 @@ func advancedMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&message, &level, &service)
 
 		// Extract user_id
-		userRe := regexp.MustCompile(`user_id=([a-zA-Z0-9_-]+)`)
 		if matches := userRe.FindStringSubmatch(message); len(matches) > 1 {
 			userIDs[matches[1]]++
 		}
 
 		// Extract order_id
-		orderRe := regexp.MustCompile(`order_id=([A-Z0-9-]+)`)
 		if matches := orderRe.FindStringSubmatch(message); len(matches) > 1 {
 			orderIDs[matches[1]]++
 		}
 
 		// Extract product_id
-		productRe := regexp.MustCompile(`product_id=([A-Z0-9-]+)`)
 		if matches := productRe.FindStringSubmatch(message); len(matches) > 1 {
 			productIDs[matches[1]]++
 		}
 
 		// Extract error reasons
-		reasonRe := regexp.MustCompile(`reason=([a-zA-Z_]+)`)
 		if matches := reasonRe.FindStringSubmatch(message); len(matches) > 1 {
 			errorReasons[matches[1]]++
 		}
 
 		// Extract response times (duration or timeout)
-		durationRe := regexp.MustCompile(`duration=(\d+)ms`)
 		if matches := durationRe.FindStringSubmatch(message); len(matches) > 1 {
 			if val, err := strconv.Atoi(matches[1]); err == nil {
 				responseTimes = append(responseTimes, val)
 			}
 		}
 
-		timeoutRe := regexp.MustCompile(`timeout=(\d+)ms`)
 		if matches := timeoutRe.FindStringSubmatch(message); len(matches) > 1 {
 			if val, err := strconv.Atoi(matches[1]); err == nil {
 				responseTimes = append(responseTimes, val)
@@ -1176,7 +1207,6 @@ func advancedMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Extract attempt counts
-		attemptsRe := regexp.MustCompile(`attempts=(\d+)`)
 		if matches := attemptsRe.FindStringSubmatch(message); len(matches) > 1 {
 			if val, err := strconv.Atoi(matches[1]); err == nil {
 				attemptCounts = append(attemptCounts, val)
@@ -1184,7 +1214,6 @@ func advancedMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Extract stock levels
-		stockRe := regexp.MustCompile(`current_stock=(\d+)`)
 		if matches := stockRe.FindStringSubmatch(message); len(matches) > 1 {
 			if val, err := strconv.Atoi(matches[1]); err == nil {
 				stockLevels = append(stockLevels, val)
