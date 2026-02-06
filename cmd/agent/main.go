@@ -38,7 +38,9 @@ func main() {
 	// ✅ Read server URL from environment
 	serverURL := os.Getenv("SERVER_URL")
 	if serverURL == "" {
-		serverURL = "http://localhost:8080"
+		// 🚨 PRODUCTION FIX: Default to public URL if env var is missing
+		// This prevents "localhost" errors in Render
+		serverURL = "https://logflow-api.onrender.com"
 	}
 
 	// Ensure scheme exists (Render value 'host' provides just the domain)
