@@ -20,7 +20,7 @@ services:
     plan: free
     envVars:
       - key: SERVER_URL
-        fromService:
-          type: web
-          name: logflow-api
-          property: url
+        value: https://logflow-api.onrender.com
+        # fromService is great but 'url' isn't supported.
+        # We'll use a placeholder or the predictable URL structure.
+        # Once your API is up, it will be at https://logflow-api.onrender.com
