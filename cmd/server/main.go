@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq" // PostgreSQL driver
 	"github.com/serilevanjalines/LogFlow/internal/ai"
 )
 
@@ -204,18 +204,20 @@ func initDB() error {
 		return fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 
-	// Ensure simple protocol for pooled Postgres (avoids prepared statement errors)
+	// Ensure simple protocol for pooled Postgres (transaction mode compatibility)
 	if parsedURL, err := url.Parse(dbURL); err == nil {
 		query := parsedURL.Query()
-		if query.Get("simple_protocol") == "" {
-			query.Set("simple_protocol", "true")
+		// pgx uses default_query_exec_mode instead of simple_protocol
+		if query.Get("default_query_exec_mode") == "" {
+			query.Set("default_query_exec_mode", "simple_protocol")
 			parsedURL.RawQuery = query.Encode()
 			dbURL = parsedURL.String()
 		}
 	}
 
 	var err error
-	db, err = sql.Open("postgres", dbURL)
+	// Use "pgx" driver
+	db, err = sql.Open("pgx", dbURL)
 	if err != nil {
 		return fmt.Errorf("error opening database: %w", err)
 	}

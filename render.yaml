@@ -1,0 +1,26 @@
+services:
+  # The API Server
+  - type: web
+    name: logflow-api
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # The Log Generator Agent (Background Worker)
+  # This runs 24/7 generating logs and sending them to the API
+  - type: worker
+    name: logflow-agent
+    env: docker
+    dockerfilePath: Dockerfile.agent
+    plan: free
+    envVars:
+      - key: SERVER_URL
+        fromService:
+          type: web
+          name: logflow-api
+          property: url
