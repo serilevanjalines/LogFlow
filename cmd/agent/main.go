@@ -19,6 +19,22 @@ type LogEvent struct {
 }
 
 func main() {
+	// ✅ Start dummy HTTP server for Render Healthcheck (since we must run as Web Service)
+	go func() {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8081"
+		}
+		fmt.Printf("🔌 Agent listening on port %s for healthchecks\n", port)
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("✅ LogFlow Agent is Running"))
+		})
+		if err := http.ListenAndServe(":"+port, nil); err != nil {
+			fmt.Printf("❌ Failed to bind port: %v\n", err)
+		}
+	}()
+
 	// ✅ Read server URL from environment
 	serverURL := os.Getenv("SERVER_URL")
 	if serverURL == "" {

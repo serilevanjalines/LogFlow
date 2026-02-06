@@ -11,9 +11,9 @@ services:
       - key: GEMINI_API_KEY
         sync: false
 
-  # The Log Generator Agent (Background Worker)
-  # This runs 24/7 generating logs and sending them to the API
-  - type: worker
+  # The Log Generator Agent (Running as Web Service for Free Tier)
+  # It includes a dummy HTTP listener to satisfy Render's port binding requirement
+  - type: web
     name: logflow-agent
     env: docker
     dockerfilePath: Dockerfile.agent
