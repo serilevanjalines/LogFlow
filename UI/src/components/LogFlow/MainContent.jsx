@@ -59,6 +59,19 @@ export default function MainContent({ activeTab, setActiveTab, onSelectLogWindow
         {activeTab === 'metrics' && <SystemMetrics />}
         {activeTab === 'advanced' && <AdvancedMetrics />}
       </div>
-    </main>
+    </div>
+      
+      {/* 
+        ✅ AUTO-WAKE AGENT: 
+        Hidden iframe pings the Log Generator Agent to keep it awake on Render Free Tier.
+        This ensures logs are generated 24/7 as long as the dashboard is open anywhere.
+      */}
+  <iframe
+    src="https://logflow-agent.onrender.com"
+    style={{ width: 0, height: 0, border: 'none', position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+    title="Agent Keep-Alive"
+    aria-hidden="true"
+  />
+    </main >
   );
 }
