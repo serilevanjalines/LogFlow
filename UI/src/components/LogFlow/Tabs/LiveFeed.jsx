@@ -22,7 +22,7 @@ export default function LiveFeed() {
         };
 
         fetchLogs();
-        const interval = setInterval(fetchLogs, 2000);
+        const interval = setInterval(fetchLogs, 1500);
         return () => clearInterval(interval);
     }, []);
 

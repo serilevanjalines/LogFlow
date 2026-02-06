@@ -26,7 +26,7 @@ export default function AdvancedMetrics() {
     };
 
     handleFetchMetrics();
-    const interval = setInterval(handleFetchMetrics, 5000);
+    const interval = setInterval(handleFetchMetrics, 1500); // ⚡ Faster updates (1.5s)
     return () => clearInterval(interval);
   }, []);
 
