@@ -8,7 +8,7 @@ LogFlow is a high-performance observability platform designed for automated inci
 LogFlow implements a "Time-Travel" debugger that allows operators to contrast system states between arbitrary timestamps. The platform performs a statistical and semantic differentiation of log data to identify the transition from nominal operation to service degradation.
 
 ### 2. Multimodal Infrastructure Reasoning
-The platform utilizes the Google Gemini 1.5 Flash model to interpret infrastructure architecture diagrams. By correlating visual dependency maps with incoming telemetry, LogFlow identifies potential cascading failures across service boundaries that traditional rule-based systems might overlook.
+The platform utilizes the Google Gemini 3 model to interpret infrastructure architecture diagrams. By correlating visual dependency maps with incoming telemetry, LogFlow identifies potential cascading failures across service boundaries that traditional rule-based systems might overlook.
 
 ### 3. High-Concurrency Telemetry Ingestion
 Built in Go, the LogFlow backend is optimized for high-throughput ingestion. It features a non-blocking architecture capable of processing thousands of log events per second while maintaining persistent storage integrity.
