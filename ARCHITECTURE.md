@@ -1,6 +1,8 @@
-# System Architecture Diagram
+# LogFlow Technical Architecture Specification
 
-## Data Flow
+This document outlines the architectural design and data flow of the LogFlow observability platform. The system is designed for high-availability, consistent telemetry ingestion, and low-latency diagnostic reasoning.
+
+## High-Level Data Orchestration
 
 ```
 USER INTERACTION

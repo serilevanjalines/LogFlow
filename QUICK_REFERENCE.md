@@ -1,162 +1,64 @@
-# Quick Reference - Frontend-Backend Connection
+# LogFlow Operations and API Reference
 
-## Files Modified/Created
+This document serves as a technical reference for the LogFlow platform, covering internal service connections, API specifications, and operational workflows.
 
-```
-LogFlow/
-├── UI/
-│   ├── src/
-│   │   ├── services/
-│   │   │   └── api.js ✅ NEW - Centralized API service
-│   │   ├── App.jsx ✅ UPDATED
-│   │   ├── Dashboard.jsx ✅ UPDATED
-│   │   └── components/
-│   │       └── LogFlow/
-│   │           ├── Sidebar.jsx ✅ UPDATED
-│   │           └── Tabs/
-│   │               ├── TimeTravelDebugger.jsx ✅ UPDATED
-│   │               ├── AiAssistant.jsx ✅ UPDATED
-│   │               └── SystemMetrics.jsx ✅ UPDATED
-│   ├── .env.example ✅ NEW
-│   └── vite.config.js (proxy already configured)
-├── cmd/server/main.go (CORS already enabled)
-├── FRONTEND_BACKEND_CONNECTION.md ✅ NEW - Setup guide
-├── CONNECTION_SETUP_SUMMARY.md ✅ NEW - This summary
-└── start-dev.bat ✅ NEW - Quick launcher
-```
+## Service Mapping
 
-## Backend Endpoints
+The platform is composed of the following core modules:
 
-| Path          | Method | Purpose                                     |
-| ------------- | ------ | ------------------------------------------- |
-| `/health`     | GET    | Check backend status                        |
-| `/logs`       | GET    | Get logs (query: start, end, limit)         |
-| `/metrics`    | GET    | Get system metrics                          |
-| `/ai/compare` | GET    | Compare log periods (query: healthy, crash) |
-| `/ai/query`   | POST   | Query AI (body: {question})                 |
-| `/ai/summary` | GET    | Get AI summary                              |
-| `/ingest`     | POST   | Submit log (body: LogEvent)                 |
+| Module | Purpose | Location |
+| :--- | :--- | :--- |
+| **API Ingestion Service** | High-performance Go-based telemetry ingestion | `cmd/server/main.go` |
+| **Observability Interface** | React-based frontend dashboard | `UI/src/` |
+| **Telemetry Agent** | Simulated system traffic and log generation | `cmd/agent/main.go` |
+| **Data Access Layer** | Standardized API client for frontend-backend communication | `UI/src/services/api.js` |
 
-## API Service Functions
+## API Specification
 
-```javascript
-import {
-  checkHealth, // → GET /health
-  getLogs, // → GET /logs
-  getMetrics, // → GET /metrics
-  compareLogsPeriods, // → GET /ai/compare
-  queryAI, // → POST /ai/query
-  getSummary, // → GET /ai/summary
-  ingestLog, // → POST /ingest
-} from "./services/api";
-```
+All endpoints are hosted relative to the `API_BASE_URL`. By default, this is `http://localhost:8080` in development and `https://logflow-api.onrender.com` in production.
 
-## Quick Start
+| Endpoint | Method | Description | Request Body |
+| :--- | :--- | :--- | :--- |
+| `/health` | GET | Returns the operational status of the service. | N/A |
+| `/logs` | GET | Retrieves log events filtered by time range and limit. | N/A |
+| `/metrics` | GET | Aggregates system-level telemetry and health metrics. | N/A |
+| `/metrics/advanced` | GET | Retrieves specialized metrics including top users and errors. | N/A |
+| `/ai/compare` | GET | Performs a differential AI analysis between two log periods. | N/A |
+| `/ai/query` | POST | Submits a natural language query for AI diagnostic reasoning. | `{ "question": string }` |
+| `/ai/summary` | GET | Generates a high-level executive summary of recent system activity. | N/A |
+| `/ingest` | POST | Ingests a new log event into the persistence layer. | `LogEvent` |
 
-### Windows (One Command)
+## Technical Workflows
 
-```powershell
-.\start-dev.bat
-```
+### 1. Diagnostic Data Retrieval
+The frontend utilizes the `api.js` service layer to interact with the backend. This layer ensures consistent error handling and type safety across the application.
 
-### Manual (PowerShell)
+### 2. Operational Environment Configuration
+Environment variables must be configured to ensure proper system initialization:
 
-```powershell
-# Terminal 1 - Backend
-$env:GEMINI_API_KEY="YOUR_KEY"
-$env:DATABASE_URL="YOUR_DB_URL"
+- **DATABASE_URL**: Connection string for the PostgreSQL instance.
+- **GEMINI_API_KEY**: Google AI Studio API key for diagnostic reasoning.
+- **PORT**: Listening port for the backend server (Default: 8080).
+
+### 3. Local Development Initialization
+
+**Backend Service:**
+```bash
 go run ./cmd/server/main.go
-
-# Terminal 2 - Frontend
-cd UI
-npm run dev
 ```
 
-## Ports
-
-- Frontend: `3000`
-- Backend: `8080`
-
-## Frontend URLs
-
-- Main App: http://localhost:3000
-- Time-Travel Debugger: http://localhost:3000 (tab)
-- AI Assistant: http://localhost:3000 (tab)
-- System Metrics: http://localhost:3000 (tab)
-
-## How Requests Work
-
-```
-React Component
-    ↓
-Calls api.js function (e.g., getMetrics())
-    ↓
-Sends request to http://localhost:8080/metrics
-    ↓
-Vite proxy intercepts /api/* paths and removes /api prefix
-    ↓
-Backend handles request
-    ↓
-Response JSON returned to component
-    ↓
-Component updates UI
+**Frontend Interface:**
+```bash
+cd UI && npm run dev
 ```
 
-## Testing Connection
+## Troubleshooting and Error Management
 
-### From Frontend (DevTools Console)
+| Condition | Diagnostic Action | Resolution |
+| :--- | :--- | :--- |
+| **Connection Refused** | Verify backend process status | Restart Go server on assigned port |
+| **CORS Policy Violation** | Inspect Origin headers | Verify CORS middleware configuration in `main.go` |
+| **Metadata Extraction Failure** | Check DB connectivity | Verify `DATABASE_URL` integrity |
+| **AI Reasoning Timeout** | Inspect Gemini API status | Monitor API rate limits and key validity |
 
-```javascript
-// Test API connection
-fetch("http://localhost:8080/health")
-  .then((r) => r.json())
-  .then((d) => console.log(d));
-```
-
-### From Terminal
-
-```powershell
-# Test backend health
-curl http://localhost:8080/health
-
-# Test metrics endpoint
-curl http://localhost:8080/metrics
-```
-
-## Common Errors & Fixes
-
-| Error              | Fix                                                            |
-| ------------------ | -------------------------------------------------------------- |
-| CORS error         | Backend already has CORS. Check backend is running.            |
-| Connection refused | Backend not running. Start with: `go run ./cmd/server/main.go` |
-| Port in use        | Change port in environment or kill process                     |
-| API 404            | Check endpoint name matches backend routes                     |
-| Timeout            | Backend not responding, check logs                             |
-
-## Environment Setup
-
-Create `UI/.env`:
-
-```
-REACT_APP_API_URL=http://localhost:8080
-```
-
-Or set system variables (Windows):
-
-```powershell
-$env:GEMINI_API_KEY="your_key"
-$env:DATABASE_URL="your_url"
-$env:PORT="8080"
-```
-
-## Development Workflow
-
-1. Make changes to frontend components
-2. Vite auto-reloads (saves time!)
-3. Changes to backend require manual restart
-4. Use DevTools Network tab to debug API calls
-5. Check both terminal outputs for errors
-
----
-
-**All components are now properly connected to the backend! 🎉**
+This reference document is intended for maintainers and developers of the LogFlow system.
